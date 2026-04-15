@@ -1,0 +1,44 @@
+{
+    "agencies": ["04600"],
+    "refresh_interval": 30,
+    "max_incidents": 50,
+    "auto_refresh": true,
+    "sound_alerts": true,
+    "tts_enabled": true,
+    "theme": "dark",
+    "your_location": "Rogers, AR",
+    "web_port": 5000,
+    "web_host": "127.0.0.1",
+    "response_protocols": {
+        "Structure Fire": {
+            "required_units": ["Engine", "Ladder", "Rescue", "Command"],
+            "response_time_target": 4,
+            "special_instructions": "Full response, establish command, size-up required",
+            "priority_level": 1
+        },
+        "Medical Emergency": {
+            "required_units": ["Engine", "Ambulance"],
+            "response_time_target": 6,
+            "special_instructions": "Medical response, patient assessment",
+            "priority_level": 2
+        },
+        "Traffic Collision": {
+            "required_units": ["Engine", "Rescue"],
+            "response_time_target": 5,
+            "special_instructions": "Traffic control, extrication if needed",
+            "priority_level": 2
+        },
+        "Hazardous Materials": {
+            "required_units": ["Hazmat", "Engine", "Command"],
+            "response_time_target": 8,
+            "special_instructions": "Hazmat response, establish hot zone",
+            "priority_level": 1
+        },
+        "Rescue Operation": {
+            "required_units": ["Rescue", "Engine", "Command"],
+            "response_time_target": 6,
+            "special_instructions": "Technical rescue, safety officer required",
+            "priority_level": 1
+        }
+    }
+}

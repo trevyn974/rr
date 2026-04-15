@@ -1,0 +1,74 @@
+[
+  {
+    "camera_id": "347",
+    "url": "https://actis.idrivearkansas.com/index.php/api/cameras/image?camera=347&t=1759006145",
+    "status_code": 200,
+    "content_type": "application/json",
+    "content_length": 548452,
+    "success": true,
+    "timestamp": "2025-09-27T15:49:06.600542"
+  },
+  {
+    "camera_id": "348",
+    "url": "https://actis.idrivearkansas.com/index.php/api/cameras/image?camera=348&t=1759006146",
+    "status_code": 200,
+    "content_type": "application/json",
+    "content_length": 563705,
+    "success": true,
+    "timestamp": "2025-09-27T15:49:07.833653"
+  },
+  {
+    "camera_id": "349",
+    "url": "https://actis.idrivearkansas.com/index.php/api/cameras/image?camera=349&t=1759006147",
+    "status_code": 200,
+    "content_type": "application/json",
+    "content_length": 622077,
+    "success": true,
+    "timestamp": "2025-09-27T15:49:08.774406"
+  },
+  {
+    "camera_id": "350",
+    "url": "https://actis.idrivearkansas.com/index.php/api/cameras/image?camera=350&t=1759006148",
+    "status_code": 200,
+    "content_type": "application/json",
+    "content_length": 587864,
+    "success": true,
+    "timestamp": "2025-09-27T15:49:09.786987"
+  },
+  {
+    "camera_id": "351",
+    "url": "https://actis.idrivearkansas.com/index.php/api/cameras/image?camera=351&t=1759006149",
+    "status_code": 200,
+    "content_type": "application/json",
+    "content_length": 613716,
+    "success": true,
+    "timestamp": "2025-09-27T15:49:10.854599"
+  },
+  {
+    "camera_id": "364",
+    "url": "https://actis.idrivearkansas.com/index.php/api/cameras/image?camera=364&t=1759006150",
+    "status_code": 200,
+    "content_type": "application/json",
+    "content_length": 502350,
+    "success": true,
+    "timestamp": "2025-09-27T15:49:12.168073"
+  },
+  {
+    "camera_id": "372",
+    "url": "https://actis.idrivearkansas.com/index.php/api/cameras/image?camera=372&t=1759006152",
+    "status_code": 200,
+    "content_type": "application/json",
+    "content_length": 526839,
+    "success": true,
+    "timestamp": "2025-09-27T15:49:13.520567"
+  },
+  {
+    "camera_id": "373",
+    "url": "https://actis.idrivearkansas.com/index.php/api/cameras/image?camera=373&t=1759006153",
+    "status_code": 200,
+    "content_type": "application/json",
+    "content_length": 547217,
+    "success": true,
+    "timestamp": "2025-09-27T15:49:14.832506"
+  }
+]

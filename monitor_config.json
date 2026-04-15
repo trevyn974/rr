@@ -1,0 +1,30 @@
+{
+    "cad_script": "cad_web_server.py",
+    "check_interval": 30,
+    "health_check_timeout": 10,
+    "max_restarts_per_hour": 5,
+    "max_health_failures": 3,
+    "restart_delay": 5,
+    "log_file": "cad_monitor.log",
+    "log_level": "INFO",
+    "notifications": {
+        "enabled": true,
+        "email": {
+            "enabled": false,
+            "smtp_server": "",
+            "smtp_port": 587,
+            "username": "",
+            "password": "",
+            "to_addresses": []
+        },
+        "discord": {
+            "enabled": true,
+            "webhook_url": ""
+        },
+        "pushover": {
+            "enabled": true,
+            "user_key": "",
+            "app_token": ""
+        }
+    }
+}

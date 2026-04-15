@@ -1,0 +1,92 @@
+[
+  {
+    "id": "1",
+    "name": "STATION 1",
+    "assignments": [
+      { "title": "Unit", "name": "L1" },
+      { "title": "Unit", "name": "L21" },
+      { "title": "Unit", "name": "CR1" },
+      { "title": "Unit", "name": "CR2" },
+      { "title": "Unit", "name": "MED1" },
+      { "title": "Unit", "name": "MED21" },
+      { "title": "Unit", "name": "MED21A" },
+      { "title": "Unit", "name": "ATV1" },
+      { "title": "Unit", "name": "BC1" },
+      { "title": "Unit", "name": "CAR61" },
+      { "title": "Unit", "name": "CAR62" }
+    ]
+  },
+  {
+    "id": "2",
+    "name": "STATION 2",
+    "assignments": [
+      { "title": "Unit", "name": "E2" },
+      { "title": "Unit", "name": "R2" },
+      { "title": "Unit", "name": "MED2" },
+      { "title": "Unit", "name": "MED2A" }
+    ]
+  },
+  {
+    "id": "3",
+    "name": "STATION 3",
+    "assignments": [
+      { "title": "Unit", "name": "E3" },
+      { "title": "Unit", "name": "BRUSH3" },
+      { "title": "Unit", "name": "ARFF3" }
+    ]
+  },
+  {
+    "id": "4",
+    "name": "STATION 4",
+    "assignments": [
+      { "title": "Unit", "name": "E4" },
+      { "title": "Unit", "name": "MED4" }
+    ]
+  },
+  {
+    "id": "5",
+    "name": "STATION 5",
+    "assignments": [
+      { "title": "Unit", "name": "L5" },
+      { "title": "Unit", "name": "MED5" },
+      { "title": "Unit", "name": "BOAT5" },
+      { "title": "Unit", "name": "SQUAD5" }
+    ]
+  },
+  {
+    "id": "6",
+    "name": "STATION 6",
+    "assignments": [
+      { "title": "Unit", "name": "E6" },
+      { "title": "Unit", "name": "MED6" },
+      { "title": "Unit", "name": "BRUSH6" }
+    ]
+  },
+  {
+    "id": "7",
+    "name": "STATION 7",
+    "assignments": [
+      { "title": "Unit", "name": "E7" },
+      { "title": "Unit", "name": "E27" }
+    ]
+  },
+  {
+    "id": "8",
+    "name": "STATION 8",
+    "assignments": [
+      { "title": "Unit", "name": "E8" },
+      { "title": "Unit", "name": "E28" },
+      { "title": "Unit", "name": "BRUSH8" },
+      { "title": "Unit", "name": "HAZMAT8" }
+    ]
+  },
+  {
+    "id": "TC",
+    "name": "TRAINING CENTER",
+    "assignments": [
+      { "title": "Unit", "name": "E20" },
+      { "title": "Unit", "name": "L20" },
+      { "title": "Unit", "name": "MED20" }
+    ]
+  }
+]

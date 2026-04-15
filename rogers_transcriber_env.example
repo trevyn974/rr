@@ -1,0 +1,19 @@
+# Rogers dispatch transcriber — copy values into your environment or a local .env file (do not commit secrets).
+# PowerShell:  $env:BROADCASTIFY_XAN="paste_token_here"
+# cmd:         set BROADCASTIFY_XAN=paste_token_here
+
+# Option A: full Partner URL (redirects followed automatically)
+# BROADCASTIFY_PARTNER_URL=https://partner.broadcastify.com/16533?xan=YOUR_TOKEN
+
+# Option B: split (defaults match feed 16533)
+BROADCASTIFY_PARTNER_BASE=https://partner.broadcastify.com
+BROADCASTIFY_FEED_ID=16533
+BROADCASTIFY_XAN=
+
+# Optional tuning
+# WHISPER_MODEL=small
+# ROGERS_TRANSCRIBER_OUTPUT_DIR=rogers_transcriber_data
+# ROGERS_TRANSCRIBER_SAVE_WAV=1
+# SILENCE_END_MS=1200
+# MIN_SEGMENT_MS=400
+# SPEECH_RMS_THRESHOLD=800

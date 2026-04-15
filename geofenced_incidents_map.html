@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FDD CAD Geofenced Incidents Map</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        .incident-popup { max-width: 300px; }
+        .incident-type { font-weight: bold; color: #d32f2f; }
+        .incident-address { margin: 5px 0; }
+        .incident-time { color: #666; font-size: 0.9em; }
+        .geofence-legend { position: absolute; top: 10px; right: 10px; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; }
+        .legend-item { margin: 5px 0; }
+        .legend-color { display: inline-block; width: 20px; height: 15px; margin-right: 8px; vertical-align: middle; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="geofence-legend">
+        <h3>Geofences</h3>
+        <div id="legend-content"></div>
+    </div>
+
+    <script>
+        // Initialize map
+        const map = L.map('map').setView([36.332, -94.1185], 12);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Geofences data
+        const geofences = {"Rogers_city": {"center_lat": 36.332, "center_lon": -94.1185, "radius_miles": 15, "color": "#FF0000", "polygon_points": null}, "Fayetteville_city": {"center_lat": 36.0626, "center_lon": -94.1574, "radius_miles": 20, "color": "#0000FF", "polygon_points": null}, "Downtown_Rogers": {"center_lat": 36.33200000000001, "center_lon": -94.11850000000001, "radius_miles": null, "color": "#00FF00", "polygon_points": [[36.332, -94.1185], [36.34, -94.11], [36.34, -94.127], [36.324, -94.127], [36.324, -94.11]]}};
+        
+        // Incidents data
+        const incidents = [];
+        
+        // Add geofences to map
+        Object.entries(geofences).forEach(([name, gf]) => {
+            if (gf.polygon_points) {
+                // Custom polygon geofence
+                const polygon = L.polygon(gf.polygon_points, {
+                    color: gf.color,
+                    weight: 2,
+                    fillColor: gf.color,
+                    fillOpacity: 0.2
+                }).addTo(map);
+                polygon.bindPopup(`<b>${name}</b><br>Custom Area`);
+            } else {
+                // Circular geofence
+                const circle = L.circle([gf.center_lat, gf.center_lon], {
+                    radius: gf.radius_miles * 1609.34, // Convert miles to meters
+                    color: gf.color,
+                    weight: 2,
+                    fillColor: gf.color,
+                    fillOpacity: 0.2
+                }).addTo(map);
+                circle.bindPopup(`<b>${name}</b><br>Radius: ${gf.radius_miles} miles`);
+            }
+        });
+        
+        // Add incidents to map
+        incidents.forEach(incident => {
+            const marker = L.circleMarker([incident.lat, incident.lon], {
+                radius: 8,
+                fillColor: '#ff0000',
+                color: '#000',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+            
+            marker.bindPopup(`
+                <div class="incident-popup">
+                    <div class="incident-type">${incident.type}</div>
+                    <div class="incident-address">${incident.address}</div>
+                    <div class="incident-time">${incident.time}</div>
+                    <div><strong>Geofence:</strong> ${incident.geofence}</div>
+                    <div><strong>Distance:</strong> ${incident.distance} miles</div>
+                </div>
+            `);
+        });
+        
+        // Update legend
+        const legendContent = document.getElementById('legend-content');
+        Object.entries(geofences).forEach(([name, gf]) => {
+            const legendItem = document.createElement('div');
+            legendItem.className = 'legend-item';
+            legendItem.innerHTML = `
+                <span class="legend-color" style="background-color: ${gf.color};"></span>
+                ${name}
+            `;
+            legendContent.appendChild(legendItem);
+        });
+        
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            location.reload();
+        }, 30000);
+        
+        console.log('Map loaded with', incidents.length, 'incidents in', Object.keys(geofences).length, 'geofences');
+    </script>
+</body>
+</html>
+        

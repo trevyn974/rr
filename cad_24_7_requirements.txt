@@ -1,0 +1,61 @@
+# CAD System 24/7 Requirements
+# Core dependencies
+flask>=2.0.0
+requests>=2.25.0
+psutil>=5.8.0
+pyttsx3>=2.90
+
+# Windows service support
+pywin32>=227
+
+# Email notifications
+secure-smtplib>=0.1.1
+
+# Additional monitoring
+watchdog>=2.1.0
+
+# Enhanced logging
+colorlog>=6.6.0
+
+# Configuration management
+pyyaml>=5.4.0
+
+# Network monitoring
+netifaces>=0.11.0
+
+# System monitoring
+GPUtil>=1.4.0
+
+# Process management
+supervisor>=4.2.0
+
+# Backup and recovery
+schedule>=1.1.0
+
+# Health checks
+healthcheck>=1.3.3
+
+# Memory monitoring
+memory-profiler>=0.60.0
+
+# Performance monitoring
+py-cpuinfo>=8.0.0
+
+# Network connectivity
+ping3>=4.0.0
+
+# File system monitoring
+inotify-simple>=1.3.5; sys_platform == "linux"
+pywin32>=227; sys_platform == "win32"
+
+# Database for logging
+sqlite3  # Built-in with Python
+
+# JSON handling (built-in)
+# datetime (built-in)
+# threading (built-in)
+# subprocess (built-in)
+# signal (built-in)
+# time (built-in)
+# os (built-in)
+# sys (built-in)

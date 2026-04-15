@@ -1,0 +1,487 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>RFD CAD Live Incidents Map</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #1a1a1a; color: #ffffff; }
+        
+        .header {
+            background: #0f1419;
+            border-bottom: 2px solid #3d4a5c;
+            padding: 10px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1001;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo img {
+            border-radius: 4px;
+        }
+
+        .header-text h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+            color: #f8fafc;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-text p {
+            margin: 0;
+            font-size: 12px;
+            color: #cbd5e1;
+            letter-spacing: 1px;
+        }
+        
+        #map { height: 100vh; width: 100%; margin-top: 60px; }
+        .incident-popup { max-width: 300px; color: #000; }
+        .incident-type { font-weight: bold; color: #d32f2f; }
+        .incident-address { margin: 5px 0; }
+        .incident-time { color: #666; font-size: 0.9em; }
+        .geofence-legend { 
+            position: absolute; 
+            top: 10px; 
+            right: 10px; 
+            background: rgba(0, 0, 0, 0.8); 
+            color: white;
+            padding: 15px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+            z-index: 1000; 
+            min-width: 200px;
+        }
+        .legend-item { margin: 8px 0; }
+        .legend-color { display: inline-block; width: 20px; height: 15px; margin-right: 8px; vertical-align: middle; border-radius: 3px; }
+        .status-bar {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 2000;
+        }
+        .error {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="Document.png" alt="Rogers Fire Department Logo" style="width: 40px; height: 40px; object-fit: contain;">
+            </div>
+            <div class="header-text">
+                <h1>RFD CAD</h1>
+                <p>LIVE INCIDENTS MAP</p>
+            </div>
+        </div>
+    </div>
+    <div id="map"></div>
+    <div class="geofence-legend">
+        <h3>Geofences</h3>
+        <div id="legend-content"></div>
+        <div style="margin-top: 15px; font-size: 12px; color: #ccc;">
+            <div>Last Update: <span id="last-update">Loading...</span></div>
+            <div>Incidents: <span id="incident-count">0</span></div>
+        </div>
+    </div>
+    <div class="status-bar" id="status-bar">
+        <div>🔄 Connecting to live data...</div>
+        <button onclick="forceRefresh()" style="margin-left: 10px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Force Refresh</button>
+    </div>
+    <div class="loading" id="loading" style="display: none;">
+        <div>🔄 Loading incidents...</div>
+    </div>
+
+    <script>
+        // Global variables
+        let map;
+        let incidentMarkers = [];
+        let geofenceLayers = [];
+        let lastUpdateTime = null;
+        let refreshInterval;
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([36.3223154498963, -94.15061705692223], 12);
+            
+            // Add tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        // Fetch live data from API or use fallback data
+        async function fetchLiveData() {
+            try {
+                showLoading(true);
+                updateStatus('🔄 Fetching live data...');
+                
+                let data;
+                
+                try {
+                    // Try to fetch from server first
+                    const response = await fetch('/api/pulsepoint/map?agency_id=04600');
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    console.log('Live data fetched from server:', data);
+                    
+                } catch (serverError) {
+                    console.log('Server not available, showing empty state:', serverError.message);
+                    
+                    // Show empty state when server is not available - no sample data
+                    data = { incidents: [], geofences: [] };
+                    updateMap(data);
+                    updateStatus('⚠️ Server not available - No data');
+                    showError('Server connection failed - No live data available');
+                    return;
+                }
+                
+                updateMap(data);
+                updateStatus('✅ Connected - Live data active');
+                showError(null);
+                
+            } catch (error) {
+                console.error('Error fetching live data:', error);
+                showError(`Connection Error: ${error.message}`);
+                updateStatus('❌ Connection failed - Retrying...');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+
+        // Update map with new data
+        function updateMap(data) {
+            // Clear existing markers
+            clearIncidentMarkers();
+            
+            // Update geofences - convert array to object if needed
+            const geofences = data.geofences || [];
+            const geofencesObj = Array.isArray(geofences) 
+                ? geofences.reduce((acc, gf) => { acc[gf.name] = gf; return acc; }, {})
+                : geofences;
+            updateGeofences(geofencesObj);
+            
+            // Add new incidents
+            addIncidentsToMap(data.incidents || []);
+            
+            // Update UI
+            updateLastUpdateTime(data.last_update);
+            updateIncidentCount(data.incidents ? data.incidents.length : 0);
+        }
+
+        // Clear incident markers
+        function clearIncidentMarkers() {
+            incidentMarkers.forEach(marker => map.removeLayer(marker));
+            incidentMarkers = [];
+        }
+
+        // Update geofences
+        function updateGeofences(geofences) {
+            // Clear existing geofences
+            geofenceLayers.forEach(layer => map.removeLayer(layer));
+            geofenceLayers = [];
+            
+            // Add new geofences
+            Object.entries(geofences).forEach(([name, gf]) => {
+                let layer;
+                if (gf.polygon_points) {
+                    // Custom polygon geofence
+                    layer = L.polygon(gf.polygon_points, {
+                        color: gf.color,
+                        weight: 2,
+                        fillColor: gf.color,
+                        fillOpacity: 0.2
+                    }).addTo(map);
+                    layer.bindPopup(`<b>${name}</b><br>Custom Area`);
+                } else {
+                    // Circular geofence - validate coordinates
+                    if (!gf.center_lat || !gf.center_lon || isNaN(gf.center_lat) || isNaN(gf.center_lon)) {
+                        console.warn('Skipping geofence with invalid coordinates:', name, gf);
+                        return;
+                    }
+                    layer = L.circle([gf.center_lat, gf.center_lon], {
+                        radius: gf.radius_miles * 1609.34, // Convert miles to meters
+                        color: gf.color,
+                        weight: 2,
+                        fillColor: gf.color,
+                        fillOpacity: 0.2
+                    }).addTo(map);
+                    layer.bindPopup(`<b>${name}</b><br>Radius: ${gf.radius_miles} miles`);
+                }
+                geofenceLayers.push(layer);
+            });
+            
+            // Update legend
+            updateLegend(geofences);
+        }
+
+        // Add incidents to map
+        function addIncidentsToMap(incidents) {
+            if (!incidents || incidents.length === 0) {
+                return;
+            }
+            
+            incidents.forEach((incident, index) => {
+                // Handle both lat/lon and latitude/longitude property names
+                const lat = incident.latitude || incident.lat;
+                const lon = incident.longitude || incident.lon;
+                
+                // Skip incidents with invalid coordinates
+                if (lat === null || lat === undefined || lon === null || lon === undefined || 
+                    isNaN(parseFloat(lat)) || isNaN(parseFloat(lon))) {
+                    console.warn('Skipping incident with invalid coordinates:', incident);
+                    return;
+                }
+                
+                // Convert to numbers to ensure they're valid
+                const latNum = parseFloat(lat);
+                const lonNum = parseFloat(lon);
+                
+                const marker = L.circleMarker([latNum, lonNum], {
+                    radius: 8,
+                    fillColor: getIncidentColor(incident.type),
+                    color: '#000',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+                
+                marker.bindPopup(`
+                    <div class="incident-popup">
+                        <div class="incident-type">${incident.type}</div>
+                        <div class="incident-address">${incident.address}</div>
+                        <div class="incident-time">${formatTime(incident.time)}</div>
+                        <div><strong>Geofence:</strong> ${incident.geofence || 'None'}</div>
+                        <div><strong>Distance:</strong> ${incident.distance || 'N/A'} miles</div>
+                        <div><strong>Units:</strong> ${incident.units ? incident.units.join(', ') : 'None'}</div>
+                    </div>
+                `);
+                
+                incidentMarkers.push(marker);
+            });
+        }
+
+        // Get color based on incident type
+        function getIncidentColor(type) {
+            const colors = {
+                'Medical Emergency': '#ff6b6b',
+                'Structure Fire': '#ff4757',
+                'Vehicle Fire': '#ff6348',
+                'Gas Leak': '#ffa502',
+                'Hazardous Materials': '#ff3838',
+                'Rescue Operation': '#ff9ff3',
+                'Traffic Collision': '#ff7675',
+                'Fire Alarm': '#fd79a8',
+                'Alarm': '#fdcb6e',
+                'Smoke Investigation': '#e17055',
+                'Vegetation Fire': '#00b894',
+                'Water Rescue': '#0984e3',
+                'Lift Assist': '#6c5ce7',
+                'Public Service': '#a29bfe',
+                'Vehicle Lockout': '#74b9ff',
+                'False Alarm': '#636e72'
+            };
+            return colors[type] || '#ff0000';
+        }
+
+        // Format time for display
+        function formatTime(timeString) {
+            try {
+                const date = new Date(timeString);
+                return date.toLocaleString();
+            } catch (e) {
+                return timeString;
+            }
+        }
+
+        // Update legend
+        function updateLegend(geofences) {
+            const legendContent = document.getElementById('legend-content');
+            legendContent.innerHTML = '';
+            
+            Object.entries(geofences).forEach(([name, gf]) => {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                legendItem.innerHTML = `
+                    <span class="legend-color" style="background-color: ${gf.color};"></span>
+                    ${name}
+                `;
+                legendContent.appendChild(legendItem);
+            });
+        }
+
+        // Update status bar
+        function updateStatus(message) {
+            const statusBar = document.getElementById('status-bar');
+            statusBar.innerHTML = `<div>${message}</div>`;
+        }
+
+        // Show/hide loading indicator
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            loading.style.display = show ? 'block' : 'none';
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('error-div');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+            
+            if (message) {
+                const error = document.createElement('div');
+                error.id = 'error-div';
+                error.className = 'error';
+                error.innerHTML = message;
+                document.body.appendChild(error);
+                
+                // Auto-hide error after 10 seconds
+                setTimeout(() => {
+                    if (error.parentNode) {
+                        error.remove();
+                    }
+                }, 10000);
+            }
+        }
+
+        // Update last update time
+        function updateLastUpdateTime(timeString) {
+            const lastUpdate = document.getElementById('last-update');
+            if (timeString) {
+                try {
+                    const date = new Date(timeString);
+                    lastUpdate.textContent = date.toLocaleTimeString();
+                } catch (e) {
+                    lastUpdate.textContent = 'Unknown';
+                }
+            } else {
+                lastUpdate.textContent = 'Never';
+            }
+        }
+
+        // Update incident count
+        function updateIncidentCount(count) {
+            const incidentCount = document.getElementById('incident-count');
+            incidentCount.textContent = count;
+        }
+
+        // Force refresh function
+        async function forceRefresh() {
+            console.log('Force refresh triggered');
+            updateStatus('🔄 Force refreshing data...');
+            
+            try {
+                // Call the force refresh API endpoint
+                const response = await fetch('/api/force-refresh', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    console.log('Force refresh successful');
+                    // Wait a moment for data to update, then fetch fresh data
+                    setTimeout(fetchLiveData, 1000);
+                } else {
+                    console.error('Force refresh failed:', response.statusText);
+                    updateStatus('❌ Force refresh failed');
+                }
+            } catch (error) {
+                console.error('Force refresh error:', error);
+                updateStatus('❌ Force refresh error');
+            }
+        }
+
+        // Start auto-refresh
+        function startAutoRefresh() {
+            // Initial fetch
+            fetchLiveData();
+            
+            // Set up interval for every 15 seconds
+            refreshInterval = setInterval(fetchLiveData, 15000);
+        }
+
+        // Stop auto-refresh
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        // Initialize everything
+        function init() {
+            initMap();
+            startAutoRefresh();
+            
+            // Handle page visibility changes
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    stopAutoRefresh();
+                } else {
+                    startAutoRefresh();
+                }
+            });
+            
+            // Handle page unload
+            window.addEventListener('beforeunload', function() {
+                stopAutoRefresh();
+            });
+        }
+
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
+        

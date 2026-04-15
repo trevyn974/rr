@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFD CAD Live Map System</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border-bottom: 3px solid #f59e0b;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1000;
+            min-height: 65px;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #f59e0b, #ef4444, #f59e0b);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+        }
+
+        .logo img {
+            width: 38px;
+            height: 38px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        .logo-text h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #f59e0b;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            letter-spacing: 1px;
+        }
+
+        .logo-text p {
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            margin-top: -1px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .system-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        .system-info span {
+            padding: 4px 8px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 4px;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10b981;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #10b981;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 6px #10b981;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            color: #f59e0b;
+            border: 2px solid #f59e0b;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .refresh-btn:hover {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #000;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 80px);
+            background: #0a0a0a;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+            background: #000;
+            border: 2px solid #f59e0b;
+            margin: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+            border-radius: 0;
+            filter: contrast(1.1) brightness(0.9);
+        }
+
+        .sidebar {
+            width: 400px;
+            background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
+            border-left: 3px solid #f59e0b;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar h2 {
+            color: #f59e0b;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 800;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #f59e0b;
+            padding-bottom: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 2px solid #f59e0b;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(245, 158, 11, 0.3);
+            border-color: #d97706;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 800;
+            color: #f59e0b;
+            margin-bottom: 6px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .incidents-section {
+            margin-bottom: 30px;
+        }
+
+        .incidents-list {
+            max-height: 450px;
+            overflow-y: auto;
+            border-radius: 6px;
+            background: #0d1117;
+            border: 2px solid #f59e0b;
+            padding: 10px;
+        }
+
+        .incident-item {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .incident-item:hover {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #000;
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .incident-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #f59e0b;
+            opacity: 0.8;
+        }
+
+        .incident-type {
+            color: #f59e0b;
+            font-weight: 800;
+            font-size: 13px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .incident-address {
+            color: #e5e7eb;
+            font-size: 12px;
+            margin-bottom: 6px;
+            line-height: 1.3;
+            font-family: 'Courier New', monospace;
+        }
+
+        .incident-time {
+            color: #94a3b8;
+            font-size: 10px;
+            margin-bottom: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .incident-geofence {
+            color: #3b82f6;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .incident-units {
+            color: #10b981;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+        .geofence-legend {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .legend-title {
+            color: #f59e0b;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 13px;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.3s ease;
+        }
+
+        .legend-item:hover {
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 18px;
+            margin-right: 12px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #f59e0b;
+            font-size: 16px;
+            font-weight: 800;
+            z-index: 1000;
+            background: linear-gradient(135deg, #1f2937, #374151);
+            padding: 15px 25px;
+            border-radius: 6px;
+            border: 2px solid #f59e0b;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #ef4444;
+            color: #ef4444;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Custom scrollbar */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: #0d1117;
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #f59e0b;
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #d97706;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 320px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 300px;
+                order: 2;
+            }
+            
+            .map-container {
+                height: calc(100vh - 380px);
+                order: 1;
+            }
+        }
+
+        /* Incident type specific colors */
+        .incident-medical { border-left-color: #e74c3c !important; }
+        .incident-fire { border-left-color: #ff6b35 !important; }
+        .incident-vehicle { border-left-color: #f39c12 !important; }
+        .incident-alarm { border-left-color: #3498db !important; }
+        .incident-gas { border-left-color: #9b59b6 !important; }
+        .incident-hazardous { border-left-color: #e67e22 !important; }
+        .incident-traffic { border-left-color: #f1c40f !important; }
+        .incident-rescue { border-left-color: #1abc9c !important; }
+        .incident-smoke { border-left-color: #95a5a6 !important; }
+        .incident-vegetation { border-left-color: #27ae60 !important; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="Document.png" alt="Rogers Fire Department Logo">
+                <div class="logo-text">
+                    <h1>RFD CAD</h1>
+                    <p>DISPATCH SYSTEM</p>
+                </div>
+            </div>
+            <div class="system-info">
+                <span>V2.1</span>
+                <span>LIVE</span>
+                <span>ROGERS, AR</span>
+            </div>
+        </div>
+        <div class="header-controls">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span id="status-text">ONLINE</span>
+            </div>
+            <button class="refresh-btn" onclick="refreshMap()">
+                <span>⟳</span>
+                <span>REFRESH</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="map-container">
+            <div id="map"></div>
+            <div id="loading" class="loading" style="display: none;">Loading live incidents...</div>
+        </div>
+
+        <div class="sidebar">
+            <h2>📊 Live Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-incidents">0</div>
+                    <div class="stat-label">Total Incidents</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="geofenced-incidents">0</div>
+                    <div class="stat-label">In Geofences</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="active-incidents">0</div>
+                    <div class="stat-label">Active</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="recent-incidents">0</div>
+                    <div class="stat-label">Recent</div>
+                </div>
+            </div>
+
+            <h2>🚨 Live Incidents</h2>
+            <div id="incidents-list" class="incidents-list">
+                <div class="loading">Loading incidents...</div>
+            </div>
+
+            <div class="geofence-legend">
+                <div class="legend-title">🗺️ Geofences</div>
+                <div id="legend-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let map;
+        let incidentMarkers = [];
+        let geofenceLayers = [];
+        let lastUpdate = null;
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([36.3320, -94.1185], 12);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Load initial data
+            loadMapData();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadMapData, 30000);
+        }
+
+        // Load map data from API
+        async function loadMapData() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                
+                const response = await fetch('/api/pulsepoint/map?agency_id=04600');
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                updateMap(data);
+                updateStatistics(data);
+                updateIncidentsList(data);
+                updateLegend(data);
+                
+                lastUpdate = new Date();
+                document.getElementById('status-text').textContent = `ONLINE - ${lastUpdate.toLocaleTimeString()}`;
+                
+            } catch (error) {
+                console.error('Error loading map data:', error);
+                showError('Failed to load map data: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Update map with new data
+        function updateMap(data) {
+            // Clear existing markers
+            incidentMarkers.forEach(marker => map.removeLayer(marker));
+            incidentMarkers = [];
+            
+            // Clear existing geofences
+            geofenceLayers.forEach(layer => map.removeLayer(layer));
+            geofenceLayers = [];
+            
+            // Add geofences
+            data.geofences.forEach(geofence => {
+                let layer;
+                if (geofence.type === 'polygon') {
+                    layer = L.polygon(geofence.polygon_points, {
+                        color: geofence.color,
+                        weight: 2,
+                        fillColor: geofence.color,
+                        fillOpacity: 0.2
+                    });
+                } else {
+                    layer = L.circle([geofence.center_lat, geofence.center_lon], {
+                        radius: geofence.radius_miles * 1609.34, // Convert to meters
+                        color: geofence.color,
+                        weight: 2,
+                        fillColor: geofence.color,
+                        fillOpacity: 0.2
+                    });
+                }
+                
+                layer.bindPopup(`<b>${geofence.name}</b><br>${geofence.type === 'polygon' ? 'Custom Area' : `Radius: ${geofence.radius_miles} miles`}`);
+                layer.addTo(map);
+                geofenceLayers.push(layer);
+            });
+            
+            // Add incident markers
+            data.incidents.forEach(incident => {
+                const marker = L.circleMarker([incident.latitude, incident.longitude], {
+                    radius: 8,
+                    fillColor: getIncidentColor(incident.type),
+                    color: '#000',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+                
+                marker.bindPopup(`
+                    <div style="max-width: 300px;">
+                        <div style="font-weight: bold; color: #f59e0b; margin-bottom: 5px;">${incident.type}</div>
+                        <div style="margin: 5px 0;">${incident.address}</div>
+                        <div style="color: #666; font-size: 0.9em; margin: 5px 0;">${new Date(incident.time).toLocaleString()}</div>
+                        <div style="color: #3498db; font-size: 0.9em;">Geofence: ${incident.geofence}</div>
+                        <div style="color: #3498db; font-size: 0.9em;">Distance: ${incident.distance} miles</div>
+                        ${incident.units.length > 0 ? `<div style="color: #2ecc71; font-size: 0.9em;">Units: ${incident.units.join(', ')}</div>` : ''}
+                    </div>
+                `);
+                
+                marker.addTo(map);
+                incidentMarkers.push(marker);
+            });
+        }
+
+        // Get color for incident type
+        function getIncidentColor(type) {
+            const colors = {
+                'Medical Emergency': '#e74c3c',
+                'Structure Fire': '#ff6b35',
+                'Vehicle Fire': '#f39c12',
+                'Alarm': '#3498db',
+                'Gas Leak': '#9b59b6',
+                'Hazardous Condition': '#e67e22',
+                'Traffic Collision': '#f1c40f',
+                'Rescue': '#1abc9c',
+                'Smoke Investigation': '#95a5a6',
+                'Vegetation Fire': '#27ae60'
+            };
+            return colors[type] || '#e74c3c';
+        }
+
+        // Update statistics
+        function updateStatistics(data) {
+            document.getElementById('total-incidents').textContent = data.incidents.length;
+            document.getElementById('geofenced-incidents').textContent = data.incidents.length;
+            document.getElementById('active-incidents').textContent = data.incidents.filter(i => i.alarm_level > 0).length;
+            document.getElementById('recent-incidents').textContent = data.incidents.filter(i => i.alarm_level === 0).length;
+        }
+
+        // Update incidents list
+        function updateIncidentsList(data) {
+            const container = document.getElementById('incidents-list');
+            
+            if (data.incidents.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 20px; font-family: \'Courier New\', monospace;">No incidents in geofenced areas</div>';
+                return;
+            }
+            
+            container.innerHTML = data.incidents.map(incident => `
+                <div class="incident-item" onclick="focusOnIncident(${incident.latitude}, ${incident.longitude})">
+                    <div class="incident-type">${incident.type}</div>
+                    <div class="incident-address">${incident.address}</div>
+                    <div class="incident-time">${new Date(incident.time).toLocaleString()}</div>
+                    <div class="incident-geofence">📍 ${incident.geofence} (${incident.distance} mi)</div>
+                    ${incident.units && incident.units.length > 0 ? `<div class="incident-units">🚑 ${incident.units.join(', ')}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Update legend
+        function updateLegend(data) {
+            const container = document.getElementById('legend-content');
+            container.innerHTML = data.geofences.map(geofence => `
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: ${geofence.color};"></div>
+                    <span>${geofence.name}</span>
+                </div>
+            `).join('');
+        }
+
+        // Focus on specific incident
+        function focusOnIncident(lat, lon) {
+            map.setView([lat, lon], 15);
+        }
+
+        // Refresh map manually
+        function refreshMap() {
+            loadMapData();
+        }
+
+        // Show error message
+        function showError(message) {
+            const container = document.getElementById('incidents-list');
+            container.innerHTML = `<div class="error-message">${message}</div>`;
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
+</body>
+</html>

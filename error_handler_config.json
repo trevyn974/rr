@@ -1,0 +1,32 @@
+{
+    "log_level": "INFO",
+    "log_file": "cad_errors.log",
+    "max_error_count": 10,
+    "error_reset_time": 3600,
+    "circuit_breaker_threshold": 5,
+    "circuit_breaker_timeout": 300,
+    "max_recovery_attempts": 3,
+    "recovery_delay": 5,
+    "notifications": {
+        "enabled": true,
+        "critical_errors": true,
+        "error_threshold": 5,
+        "email": {
+            "enabled": false,
+            "smtp_server": "",
+            "smtp_port": 587,
+            "username": "",
+            "password": "",
+            "to_addresses": []
+        },
+        "discord": {
+            "enabled": true,
+            "webhook_url": ""
+        },
+        "pushover": {
+            "enabled": true,
+            "user_key": "",
+            "app_token": ""
+        }
+    }
+}

@@ -1,0 +1,80 @@
+{
+  "scan_interval_seconds": 15,
+  "default_radius_meters": 1000.0,
+  "agencies": [
+    "001",
+    "002",
+    "4600"
+  ],
+  "notifications_enabled": true,
+  "notification_methods": [
+    "console"
+  ],
+  "data_retention_days": 30,
+  "save_to_database": false,
+  "global_filters": {
+    "allow_list": [],
+    "block_list": [
+      "FALSE",
+      "UNKNOWN"
+    ]
+  },
+  "locations": [
+    {
+      "name": "Downtown Portland",
+      "address": "Portland, OR",
+      "latitude": 45.5152,
+      "longitude": -122.6784,
+      "radius_meters": 5000.0,
+      "importance_level": 1,
+      "enabled": false,
+      "filters": {
+        "allow_list": [
+          "FIRE",
+          "MED",
+          "HAZMAT",
+          "RESCUE"
+        ],
+        "block_list": [
+          "FALSE"
+        ]
+      }
+    },
+    {
+      "name": "Seattle Downtown",
+      "address": "Seattle, WA",
+      "latitude": 47.6062,
+      "longitude": -122.3321,
+      "radius_meters": 3000.0,
+      "importance_level": 2,
+      "enabled": false,
+      "filters": {
+        "allow_list": [
+          "FIRE",
+          "MED"
+        ],
+        "block_list": []
+      }
+    },
+    {
+      "name": "Rogers Arkansas",
+      "address": "Rogers, AR",
+      "latitude": 36.332,
+      "longitude": -94.1185,
+      "radius_meters": 5000.0,
+      "importance_level": 1,
+      "enabled": true,
+      "filters": {
+        "allow_list": [
+          "FIRE",
+          "MED",
+          "HAZMAT",
+          "RESCUE"
+        ],
+        "block_list": [
+          "FALSE"
+        ]
+      }
+    }
+  ]
+}
